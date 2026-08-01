@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AVENGERS: DOOMSDAY — Cinematic Scroll Experience</title>
+<style>
+  :root {
+    --black: #000000;
+    --green: #00ff9c;
+    --mint: #9dffd6;
+    --white: #eafff6;
+    --font-display: 'Arial Black', 'Arial Narrow', sans-serif;
+    --font-ui: 'Segoe UI', Verdana, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; color: var(--white); font-family: var(--font-ui); overscroll-behavior: none; }
+  html { scrollbar-width: none; }
+  html::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  html.scroll-locked { overflow: hidden; }
+
+  .stage { position: fixed; inset: 0; overflow: hidden; background: #000; z-index: 0; }
+  .video-layer { position: absolute; inset: 0; z-index: 1; overflow: hidden; background: #000; }
+  .cover-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; background: #000; will-change: opacity; }
+
+  .cinematic-wrap { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+  .cinematic-beat { position: absolute; left: 50%; top: 50%; width: min(92vw, 1100px); text-align: center; transform: translate(-50%,-50%); will-change: transform, opacity; }
+  .cinematic-line {
+    display: block; font-family: var(--font-display); text-transform: uppercase; line-height: 0.92;
+    letter-spacing: 0.035em; font-size: clamp(2.4rem, 8.5vw, 8.4rem); color: #eafff6;
+    text-shadow: 0 0 12px rgba(0,255,156,0.55), 0 0 42px rgba(0,255,156,0.35), 0 0 90px rgba(0,200,130,0.25);
+  }
+  .cinematic-small { font-size: clamp(1.9rem, 6.4vw, 6.2rem); }
+
+  .orbit-layer { position: absolute; inset: 0; z-index: auto; }
+  .orbit-card {
+    position: absolute; top: 50%; left: 50%; width: clamp(300px, 33vw, 520px); aspect-ratio: 1180/486;
+    transform: translate(-50%,-50%); transform-origin: 50% 50%; will-change: transform, opacity;
+    border-radius: 18px; overflow: hidden; background: #02100b; cursor: pointer;
+    border: 1px solid rgba(0,255,156,0.3); box-shadow: 0 30px 80px -24px rgba(0,0,0,0.85), 0 0 26px -6px rgba(0,255,156,0.25);
+  }
+  .orbit-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; background: #02100b; }
+  .orbit-info {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(12px,1.4vw,22px) clamp(16px,1.8vw,26px) clamp(14px,1.6vw,22px);
+    background: linear-gradient(to top, rgba(3,16,11,0.7), rgba(3,16,11,0.1)); border-top: 1px solid rgba(0,255,156,0.14);
+  }
+  .orbit-name { font-family: var(--font-display); font-size: clamp(1.15rem,2vw,2.1rem); line-height: 1; text-transform: uppercase; color: #eafff6; text-shadow: 0 0 22px rgba(0,255,156,0.35); }
+  .orbit-desc { margin-top: 0.5rem; font-size: clamp(10.5px,0.82vw,13px); line-height: 1.55; color: rgba(216,238,228,0.72); max-width: 40ch; }
+
+  .site-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between;
+    padding: clamp(14px,2vw,26px) clamp(18px,3vw,44px); opacity: 0; transition: opacity 0.6s;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); pointer-events: none;
+  }
+  .brand { font-family: var(--font-display); font-size: clamp(0.9rem,1.5vw,1.2rem); letter-spacing: 0.28em; text-transform: uppercase; color: var(--white); }
+  .brand span { color: var(--green); }
+  .nav-links { display: flex; gap: clamp(14px,2vw,28px); list-style: none; }
+  .nav-links li { font-size: clamp(10px,1vw,13px); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(234,255,246,0.7); }
+
+  .scroll-cue {
+    position: fixed; bottom: clamp(20px,4vh,44px); left: 50%; transform: translateX(-50%); z-index: 30;
+    text-align: center; font-size: clamp(10px,1.2vw,13px); letter-spacing: 0.4em; text-transform: uppercase;
+    color: rgba(234,255,246,0.7); pointer-events: none; transition: opacity 0.5s;
+  }
+  .scroll-cue .bar { width: 1px; height: 46px; margin: 10px auto 0; background: linear-gradient(to bottom, transparent, var(--green)); animation: cuePulse 1.8s ease-in-out infinite; }
+  @keyframes cuePulse { 0%,100% { transform: scaleY(0.4); opacity: 0.3; } 50% { transform: scaleY(1); opacity: 1; } }
+
+  .scroll-track { position: relative; width: 100%; z-index: 0; }
+  .scroll-track section { width: 100%; }
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="video-layer">
+      <video id="marvelVideo" class="cover-video" src="videos/marvel-intro-seq.mp4" muted playsInline></video>
+      <video id="heroVideo" class="cover-video" src="videos/hero-seq-v2.mp4" muted playsInline preload="auto"></video>
+    </div>
+    <div class="cinematic-wrap" id="cinematicWrap"></div>
+    <div class="orbit-layer" id="orbitLayer"></div>
+  </div>
+
+  <header class="site-header" id="siteHeader">
+    <div class="brand">AVENGERS<span>:</span> DOOMSDAY</div>
+    <ul class="nav-links"><li>Timeline</li><li>Characters</li><li>Finale</li></ul>
+  </header>
+
+  <div class="scroll-cue" id="scrollCue"><div>Scroll to begin</div><div class="bar"></div></div>
+
+  <div class="scroll-track" id="scrollTrack"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var CHARACTERS = [
+    { slug: 'doom', name: 'Doctor Doom', desc: 'The iron-willed sovereign of Latveria — master of science and sorcery, bending every reality to his design.' },
+    { slug: 'blackpanther', name: 'Black Panther', desc: 'Wakanda\'s fearless protector, striking with the speed, precision, and fury of the panther goddess.' },
+    { slug: 'cyclops', name: 'Cyclops', desc: 'Field leader of the X-Men, unleashing devastating optic force with unshakable discipline.' },
+    { slug: 'mystique', name: 'Mystique', desc: 'The shape-shifting infiltrator who can wear any face — trusted by none, lethal in every form she takes.' },
+    { slug: 'gambit', name: 'Gambit', desc: 'The Ragin\' Cajun — charging every card with explosive kinetic energy and reckless charm.' },
+    { slug: 'namor', name: 'Namor', desc: 'The winged sovereign of Talokan — as ancient as the deep and as merciless as the tide.' },
+  ];
+
+  var BEATS = [
+    { text: ['REALITY IS UNRAVELING'], start: 0.02, end: 0.14, small: false },
+    { text: ['A NEW THREAT'], start: 0.30, end: 0.37, small: false },
+    { text: ['THE MULTIVERSE', 'IS BREAKING'], start: 0.38, end: 0.45, small: true },
+    { text: ['ONLY LEGENDS REMAIN'], start: 0.58, end: 0.65, small: false },
+    { text: ['THE END BEGINS'], start: 0.90, end: 0.97, small: false },
+  ];
+
+  var SECTIONS = [
+    { h: 380 }, { h: 740 }, { h: 590 }, { h: 660 }, { h: 760 }, { h: 450 }
+  ];
+
+  /* ---------- Build scroll track ---------- */
+  var track = document.getElementById('scrollTrack');
+  var totalVh = 0;
+  SECTIONS.forEach(function (s) { totalVh += s.h; });
+  SECTIONS.forEach(function (s) {
+    var el = document.createElement('section');
+    el.style.height = s.h + 'vh';
+    track.appendChild(el);
+  });
+
+  /* ---------- Build cinematic beats ---------- */
+  var cw = document.getElementById('cinematicWrap');
+  var beatEls = [];
+  BEATS.forEach(function (b) {
+    var div = document.createElement('div');
+    div.className = 'cinematic-beat';
+    div.style.opacity = '0';
+    b.text.forEach(function (line) {
+      var span = document.createElement('span');
+      span.className = 'cinematic-line' + (b.small ? ' cinematic-small' : '');
+      span.textContent = line;
+      div.appendChild(span);
+    });
+    cw.appendChild(div);
+    beatEls.push({ div: div, start: b.start, end: b.end });
+  });
+
+  /* ---------- Build orbit cards ---------- */
+  var orbit = document.getElementById('orbitLayer');
+  var cards = [];
+  CHARACTERS.forEach(function (c) {
+    var card = document.createElement('div');
+    card.className = 'orbit-card';
+    card.style.opacity = '0';
+    card.innerHTML =
+      '<video class="orbit-video" src="videos/char-' + c.slug + '.mp4" muted loop playsInline preload="auto"></video>' +
+      '<div class="orbit-info"><div class="orbit-name">' + c.name + '</div><div class="orbit-desc">' + c.desc + '</div></div>';
+    var vid = card.querySelector('video');
+    vid.addEventListener('mouseenter', function () { vid.currentTime = 0; vid.play().catch(function () {}); });
+    vid.addEventListener('mouseleave', function () { vid.pause(); });
+    vid.addEventListener('touchstart', function () { vid.currentTime = 0; vid.play().catch(function () {}); });
+    vid.addEventListener('touchend', function () { vid.pause(); });
+    var p = vid.play();
+    if (p) p.then(function () { vid.pause(); vid.currentTime = 0; }).catch(function () {});
+    cards.push(card);
+    orbit.appendChild(card);
+  });
+
+  /* ---------- Marvel intro: autoplay once, lock scroll ---------- */
+  var marvel = document.getElementById('marvelVideo');
+  var heroVideo = document.getElementById('heroVideo');
+  var header = document.getElementById('siteHeader');
+  var cue = document.getElementById('scrollCue');
+
+  document.documentElement.classList.add('scroll-locked');
+  marvel.play().catch(function () {});
+  marvel.addEventListener('ended', function () {
+    marvel.style.transition = 'opacity 0.5s';
+    marvel.style.opacity = '0';
+    document.documentElement.classList.remove('scroll-locked');
+  });
+
+  /* ---------- Scroll progress & animations (vanilla JS) ---------- */
+  var signals = { heroOp: 0, showcase: 0, header: 0 };
+
+  var clamp01 = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
+  var lerp = function (a, b, t) { return a + (b - a) * t; };
+  var smoothstep = function (a, b, x) { var t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+
+  var lastY = window.scrollY;
+  var heroActive = false;
+
+  function onScroll() {
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    var p = max > 0 ? window.scrollY / max : 0;
+
+    // hero opacity mapping (appears around 30-55% of scroll)
+    var heroIn = clamp01((p - 0.28) / 0.08);
+    var heroOut = 1 - clamp01((p - 0.5) / 0.08);
+    signals.heroOp = Math.min(heroIn, heroOut);
+    heroVideo.style.opacity = signals.heroOp.toFixed(3);
+
+    // showcase appears 60-80%
+    signals.showcase = clamp01((p - 0.6) / 0.05) * (1 - clamp01((p - 0.82) / 0.05));
+
+    // header fade in
+    header.style.opacity = (clamp01((p - 0.05) / 0.1) * 1).toFixed(3);
+    cue.style.opacity = (1 - clamp01((p - 0.03) / 0.06)).toFixed(3);
+
+    // cinematic beats
+    beatEls.forEach(function (b) {
+      if (p < b.start || p > b.end) { b.div.style.opacity = '0'; return; }
+      var t = (p - b.start) / (b.end - b.start);
+      var enter = clamp01(t / 0.2);
+      var leave = clamp01((t - 0.72) / 0.28);
+      var op = enter * (1 - leave);
+      b.div.style.opacity = op.toFixed(3);
+      b.div.style.transform = 'translate(-50%, -50%) translateY(' + ((1 - enter) * 38).toFixed(1) + 'px)';
+    });
+
+    // hero video play/pause with scroll velocity
+    var speed = Math.abs(window.scrollY - lastY);
+    lastY = window.scrollY;
+    if (signals.heroOp > 0.002) {
+      if (speed > 3) { if (heroVideo.paused) heroVideo.play().catch(function () {}); }
+      else if (!heroVideo.paused) heroVideo.pause();
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ---------- Orbit animation loop ---------- */
+  var TAU = Math.PI * 2;
+  var frame = 0;
+
+  function orbitLoop() {
+    requestAnimationFrame(orbitLoop);
+    frame++;
+    if (frame % 2) return;
+
+    var s = signals.showcase;
+    var t = performance.now() / 1000;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var Rx = vw * 0.3;
+    var Ry = vh * 0.15;
+    var base = s * TAU * 0.85 + t * 0.045;
+    var N = cards.length;
+
+    for (var i = 0; i < N; i++) {
+      var card = cards[i];
+      var enterAt = 0.05 + i * 0.055;
+      var enter = smoothstep(enterAt, enterAt + 0.16, s);
+      if (enter <= 0.001) { if (card.style.opacity !== '0') card.style.opacity = '0'; continue; }
+      var theta = base + i * (TAU / N);
+      var d = Math.cos(theta);
+      var depth01 = (d + 1) / 2;
+      var x = Math.sin(theta) * Rx;
+      var y = d * Ry;
+      var scale = lerp(0.6, 1.06, depth01) * lerp(0.5, 1, enter);
+      var enterX = (1 - enter) * (vw * 0.55);
+      card.style.transform =
+        'translate(-50%, -50%) perspective(1100px) translate3d(' + (x + enterX).toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) rotateY(' +
+        (-Math.sin(theta) * 12).toFixed(2) + 'deg) scale(' + scale.toFixed(3) + ')';
+      card.style.opacity = (lerp(0.32, 1, depth01) * enter).toFixed(3);
+      card.style.zIndex = d > 0 ? '4' : '2';
+    }
+  }
+  requestAnimationFrame(orbitLoop);
+
+  window.addEventListener('load', onScroll);
+  onScroll();
+})();
+</script>
+</body>
+</html>

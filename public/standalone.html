@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AVENGERS: DOOMSDAY — Cinematic Scroll Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --black: #000000;
+    --graphite: #07090b;
+    --green: #00ff9c;
+    --green-deep: #00b473;
+    --green-dark: #083b2a;
+    --mint: #9dffd6;
+    --core: #e6fff4;
+    --white: #eafff6;
+    --silver: #aebbb5;
+    --font-display: 'Anton', 'Arial Narrow', sans-serif;
+    --font-ui: 'Chakra Petch', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: #000;
+    color: var(--white);
+    font-family: var(--font-ui);
+    overscroll-behavior: none;
+  }
+  html { scrollbar-width: none; }
+  html::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  html.scroll-locked { overflow: hidden; }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #000;
+    z-index: 0;
+  }
+
+  .video-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .cover-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    pointer-events: none;
+    background: #000;
+    will-change: opacity;
+  }
+
+  /* ---------- Cinematic text ---------- */
+  .cinematic-wrap { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+  .cinematic-beat {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(92vw, 1100px);
+    text-align: center;
+    transform: translate(-50%, -50%);
+    will-change: transform, opacity, filter;
+  }
+  .cinematic-kicker {
+    display: block;
+    font-weight: 600;
+    letter-spacing: 0.6em;
+    text-indent: 0.6em;
+    font-size: clamp(0.6rem, 1.4vw, 0.95rem);
+    color: var(--mint);
+    opacity: 0.85;
+    margin-bottom: clamp(0.6rem, 1.6vw, 1.3rem);
+  }
+  .cinematic-line {
+    display: block;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    line-height: 0.92;
+    letter-spacing: 0.035em;
+    font-size: clamp(2.4rem, 8.5vw, 8.4rem);
+    color: #eafff6;
+    margin: 0;
+    text-shadow:
+      0 0 12px rgba(0,255,156,0.55),
+      0 0 42px rgba(0,255,156,0.35),
+      0 0 90px rgba(0,200,130,0.25);
+  }
+  .cinematic-small { font-size: clamp(1.9rem, 6.4vw, 6.2rem); }
+
+  /* ---------- Orbit cards ---------- */
+  .orbit-layer { position: absolute; inset: 0; z-index: auto; }
+  .orbit-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(300px, 33vw, 520px);
+    aspect-ratio: 1180 / 486;
+    transform: translate(-50%, -50%);
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #02100b;
+    border: 1px solid rgba(0,255,156,0.3);
+    box-shadow: 0 30px 80px -24px rgba(0,0,0,0.85), 0 0 26px -6px rgba(0,255,156,0.25);
+    backface-visibility: hidden;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .orbit-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background: #02100b;
+  }
+  .orbit-info {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: clamp(12px,1.4vw,22px) clamp(16px,1.8vw,26px) clamp(14px,1.6vw,22px);
+    background: linear-gradient(to top, rgba(3,16,11,0.6), rgba(3,16,11,0.1));
+    border-top: 1px solid rgba(0,255,156,0.14);
+  }
+  .orbit-name {
+    font-family: var(--font-display);
+    font-size: clamp(1.15rem,2vw,2.1rem);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #eafff6;
+    text-shadow: 0 0 22px rgba(0,255,156,0.35);
+  }
+  .orbit-desc {
+    margin-top: 0.5rem;
+    font-size: clamp(10.5px,0.82vw,13px);
+    line-height: 1.55;
+    letter-spacing: 0.04em;
+    color: rgba(216,238,228,0.72);
+    max-width: 40ch;
+  }
+
+  /* ---------- Header ---------- */
+  .site-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(14px,2vw,26px) clamp(18px,3vw,44px);
+    opacity: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: clamp(0.9rem,1.5vw,1.2rem);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .brand span { color: var(--green); }
+  .nav-links { display: flex; gap: clamp(14px,2vw,28px); list-style: none; }
+  .nav-links li {
+    font-size: clamp(10px,1vw,13px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(234,255,246,0.7);
+  }
+
+  /* ---------- Scroll cue ---------- */
+  .scroll-cue {
+    position: fixed;
+    bottom: clamp(20px,4vh,44px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    text-align: center;
+    font-size: clamp(10px,1.2vw,13px);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: rgba(234,255,246,0.7);
+    pointer-events: none;
+  }
+  .scroll-cue .bar {
+    width: 1px;
+    height: 46px;
+    margin: 10px auto 0;
+    background: linear-gradient(to bottom, transparent, var(--green));
+    animation: cuePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes cuePulse {
+    0%,100% { transform: scaleY(0.4); opacity: 0.3; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  .scroll-track { position: relative; width: 100%; z-index: 0; }
+  .scroll-track section { width: 100%; }
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="video-layer" id="videoLayer">
+      <video id="marvelVideo" class="cover-video" src="/videos/marvel-intro-seq.mp4" muted playsInline></video>
+      <video id="heroVideo" class="cover-video" src="/videos/hero-seq-v2.mp4" muted playsInline preload="auto"></video>
+    </div>
+
+    <div class="cinematic-wrap" id="cinematicWrap"></div>
+    <div class="orbit-layer" id="orbitLayer"></div>
+  </div>
+
+  <header class="site-header" id="siteHeader">
+    <div class="brand">AVENGERS<span>:</span> DOOMSDAY</div>
+    <ul class="nav-links">
+      <li>Timeline</li>
+      <li>Characters</li>
+      <li>Finale</li>
+    </ul>
+  </header>
+
+  <div class="scroll-cue" id="scrollCue">
+    <div>Scroll to begin</div>
+    <div class="bar"></div>
+  </div>
+
+  <div class="scroll-track" id="scrollTrack"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const CHARACTERS = [
+  { slug: 'doom', name: 'Doctor Doom', desc: 'The iron-willed sovereign of Latveria — master of science and sorcery, bending every reality to his design.' },
+  { slug: 'blackpanther', name: 'Black Panther', desc: 'Wakanda\'s fearless protector, striking with the speed, precision, and fury of the panther goddess.' },
+  { slug: 'cyclops', name: 'Cyclops', desc: 'Field leader of the X-Men, unleashing devastating optic force with unshakable discipline.' },
+  { slug: 'mystique', name: 'Mystique', desc: 'The shape-shifting infiltrator who can wear any face — trusted by none, lethal in every form she takes.' },
+  { slug: 'gambit', name: 'Gambit', desc: 'The Ragin\' Cajun — charging every card with explosive kinetic energy and reckless charm.' },
+  { slug: 'namor', name: 'Namor', desc: 'The winged sovereign of Talokan — as ancient as the deep and as merciless as the tide.' },
+];
+
+const BEATS = [
+  { text: ['REALITY IS UNRAVELING'], start: 0.0, end: 0.12, small: false },
+  { text: ['A NEW THREAT'], start: 0.28, end: 0.34, small: false },
+  { text: ['THE MULTIVERSE', 'IS BREAKING'], start: 0.35, end: 0.42, small: true },
+  { text: ['ONLY LEGENDS REMAIN'], start: 0.55, end: 0.62, small: false },
+  { text: ['THE END BEGINS'], start: 0.88, end: 0.95, small: false },
+];
+
+/* ---------------- Build scroll track ---------------- */
+const SECTIONS = [
+  { id: 'intro', h: 380 },      // marvel intro autoplay area
+  { id: 'hero', h: 740 },       // hero video scrub
+  { id: 'showcase', h: 590 },   // character orbit
+  { id: 'story', h: 660 },
+  { id: 'finale', h: 760 },
+  { id: 'outro', h: 450 },
+];
+const totalVh = SECTIONS.reduce((a, s) => a + s.h, 0);
+const track = document.getElementById('scrollTrack');
+SECTIONS.forEach(s => {
+  const el = document.createElement('section');
+  el.style.height = s.h + 'vh';
+  track.appendChild(el);
+});
+
+/* ---------------- Build cinematic beats ---------------- */
+const cw = document.getElementById('cinematicWrap');
+const beatEls = [];
+BEATS.forEach(b => {
+  const div = document.createElement('div');
+  div.className = 'cinematic-beat';
+  div.style.opacity = '0';
+  b.text.forEach(line => {
+    const span = document.createElement('span');
+    span.className = 'cinematic-line' + (b.small ? ' cinematic-small' : '');
+    span.textContent = line;
+    div.appendChild(span);
+  });
+  cw.appendChild(div);
+  beatEls.push({ div, ...b });
+});
+
+/* ---------------- Build orbit cards ---------------- */
+const orbit = document.getElementById('orbitLayer');
+const videos = [];
+CHARACTERS.forEach(c => {
+  const card = document.createElement('div');
+  card.className = 'orbit-card';
+  card.style.opacity = '0';
+  card.innerHTML = `
+    <video class="orbit-video" src="/videos/char-${c.slug}.mp4" muted loop playsInline preload="auto"></video>
+    <div class="orbit-info">
+      <div class="orbit-name">${c.name}</div>
+      <div class="orbit-desc">${c.desc}</div>
+    </div>
+  `;
+  const vid = card.querySelector('video');
+  vid.addEventListener('mouseenter', () => { vid.currentTime = 0; vid.play().catch(() => {}); });
+  vid.addEventListener('mouseleave', () => vid.pause());
+  vid.addEventListener('touchstart', () => { vid.currentTime = 0; vid.play().catch(() => {}); });
+  vid.addEventListener('touchend', () => vid.pause());
+  // prime first frame
+  const p = vid.play();
+  if (p) p.then(() => { vid.pause(); vid.currentTime = 0; }).catch(() => {});
+  videos.push(vid);
+  orbit.appendChild(card);
+});
+
+/* ---------------- Marvel intro: autoplay once, lock scroll ---------------- */
+const marvel = document.getElementById('marvelVideo');
+const heroVideo = document.getElementById('heroVideo');
+const header = document.getElementById('siteHeader');
+const cue = document.getElementById('scrollCue');
+
+document.documentElement.classList.add('scroll-locked');
+marvel.play().catch(() => {});
+marvel.addEventListener('ended', () => {
+  marvel.style.transition = 'opacity 0.5s';
+  marvel.style.opacity = '0';
+  document.documentElement.classList.remove('scroll-locked');
+});
+
+/* ---------------- Scroll timeline ---------------- */
+const signals = { heroOp: 0, heroT: 0, showcase: 0, header: 0 };
+
+const tl = gsap.timeline({
+  defaults: { ease: 'none' },
+  scrollTrigger: {
+    trigger: track,
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 1,
+    onUpdate: self => {
+      const p = self.progress;
+
+      // cinematic beats
+      beatEls.forEach(b => {
+        if (p < b.start || p > b.end) { b.div.style.opacity = '0'; return; }
+        const t = (p - b.start) / (b.end - b.start);
+        const enter = Math.min(1, Math.max(0, t / 0.2));
+        const leave = Math.min(1, Math.max(0, (t - 0.72) / 0.28));
+        const op = enter * (1 - leave);
+        b.div.style.opacity = op.toFixed(3);
+        b.div.style.transform = `translate(-50%, -50%) translateY(${((1 - enter) * 38).toFixed(1)}px)`;
+      });
+
+      // hero video play/pause with scroll velocity
+      if (signals.heroOp > 0.002) {
+        const speed = Math.abs(self.getVelocity());
+        if (speed > 30) { if (heroVideo.paused) heroVideo.play().catch(() => {}); }
+        else if (!heroVideo.paused) heroVideo.pause();
+      }
+      heroVideo.style.opacity = signals.heroOp.toFixed(3);
+    }
+  }
+});
+
+tl.to(signals, { heroOp: 1, duration: 0.4 }, 3.0);
+tl.to(signals, { heroOp: 0, duration: 0.8 }, 4.5);
+tl.to(signals, { header: 1, duration: 0.6 }, 2.0);
+tl.to(signals, { showcase: 1, duration: 2.2 }, 6.5);
+tl.to(signals, { showcase: 0, duration: 0.8 }, 9.0);
+
+/* ---------------- Header fade ---------------- */
+gsap.to(header, { opacity: 1, duration: 0.8, ease: 'power1.out', scrollTrigger: { trigger: track, start: '20% top', toggleActions: 'play none none reverse' } });
+gsap.to(cue, { opacity: 0, duration: 0.5, scrollTrigger: { trigger: track, start: '5% top', toggleActions: 'play none none reverse' } });
+
+/* ---------------- Orbit animation ---------------- */
+const TAU = Math.PI * 2;
+function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function smoothstep(a, b, x) { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); }
+
+const cards = Array.from(document.querySelectorAll('.orbit-card'));
+let frame = 0;
+
+function orbitLoop() {
+  frame++;
+  if (frame % 2) requestAnimationFrame(orbitLoop);
+  const s = signals.showcase;
+  const t = performance.now() / 1000;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const Rx = vw * 0.3;
+  const Ry = vh * 0.15;
+  const base = s * TAU * 0.85 + t * 0.045;
+  const N = cards.length;
+
+  for (let i = 0; i < N; i++) {
+    const card = cards[i];
+    const enterAt = 0.05 + i * 0.055;
+    const enter = smoothstep(enterAt, enterAt + 0.16, s);
+    if (enter <= 0.001) { if (card.style.opacity !== '0') card.style.opacity = '0'; continue; }
+    const theta = base + i * (TAU / N);
+    const d = Math.cos(theta);
+    const depth01 = (d + 1) / 2;
+    const x = Math.sin(theta) * Rx;
+    const y = d * Ry;
+    const scale = lerp(0.6, 1.06, depth01) * lerp(0.5, 1, enter);
+    const enterX = (1 - enter) * (vw * 0.55);
+    card.style.transform =
+      `translate(-50%, -50%) perspective(1100px) translate3d(${(x + enterX).toFixed(1)}px, ${y.toFixed(1)}px, 0) rotateY(${(-Math.sin(theta) * 12).toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+    card.style.opacity = (lerp(0.32, 1, depth01) * enter).toFixed(3);
+    card.style.zIndex = d > 0 ? '4' : '2';
+  }
+  requestAnimationFrame(orbitLoop);
+}
+requestAnimationFrame(orbitLoop);
+
+/* ---------------- Ready ---------------- */
+window.addEventListener('load', () => {
+  document.body.classList.add('ready');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { signals } from "@/lib/signals";
+import { useRaf } from "@/lib/useRaf";
+
+export default function ScrollCue() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useRaf(() => {
+    const el = ref.current;
+    if (!el) return;
+    const o = Math.max(0, 1 - signals.scroll * 34);
+    el.style.opacity = o.toFixed(3);
+    el.style.visibility = o < 0.01 ? "hidden" : "visible";
+  });
+
+  return (
+    <div ref={ref} className="scroll-cue" aria-hidden>
+      <span className="scroll-cue-label">Scroll to begin</span>
+      <div className="scroll-cue-mouse" />
+    </div>
+  );
+}
